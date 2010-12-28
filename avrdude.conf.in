@@ -15702,3 +15702,12 @@ part
 ;
 
 
+programmer
+  id    = "ftdi";
+  desc  = "SparkFun FTDI Basic Breakout";
+  type  = ft245r;
+  miso  = 1;  # RXD
+  sck   = 3;  # CTS
+  mosi  = 0;  # TXD
+  reset = 4;  # DTR
+;
