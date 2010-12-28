@@ -238,6 +238,10 @@ static int avrftdi_transmit(unsigned char mode, unsigned char *cmd, unsigned cha
   int n;
   unsigned char buf[4 + buf_size];
 
+  long timeoutval = 5;          // seconds
+  struct timeval tv;  
+  double tstart, tnow;
+
   if (mode & TX) {
     buf[0] = mode;
     buf[1] = ((buf_size - 1) & 0xff);
@@ -255,12 +259,25 @@ static int avrftdi_transmit(unsigned char mode, unsigned char *cmd, unsigned cha
   
   if (mode & RX) {
     memset(buf, 0, sizeof(buf));
+    
+    gettimeofday(&tv, NULL);
+    tstart = tv.tv_sec;
+    
     do {
       n = ftdi_read_data(&ftdic, buf + k, buf_size - k);
       E(n < 0);
       k += n;
       if(verbose >= 3 && n != 0)
         buf_dump(buf, k, "\ntransmit i_buf", 0, 16);
+
+      gettimeofday(&tv, NULL);
+      tnow = tv.tv_sec;
+      if (tnow-tstart > timeoutval) {                    // wuff - signed/unsigned/overflow
+        fprintf(stderr, "%s: avrftdi_transmit(): timeout\n",
+                progname);
+        return -1;
+      }
+
     } while (k < buf_size);
     
     memcpy(data, buf, buf_size);
