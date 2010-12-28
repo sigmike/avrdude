@@ -42,6 +42,7 @@
 #include "stk500v2.h"
 #include "stk500generic.h"
 #include "avr910.h"
+#include "serjtag.h"
 #include "butterfly.h"
 #include "usbasp.h"
 #include "usbtiny.h"
@@ -148,6 +149,8 @@ static int parse_cmdbits(OPCODE * op);
 %token K_STK600HVSP
 %token K_STK600PP
 %token K_AVR910
+%token K_SERJTAG
+%token K_FT245R
 %token K_USBASP
 %token K_USBTINY
 %token K_BUTTERFLY
@@ -459,6 +462,18 @@ prog_parm :
   K_TYPE TKN_EQUAL K_AVR910 {
     { 
       avr910_initpgm(current_prog);
+    }
+  } |
+
+  K_TYPE TKN_EQUAL K_SERJTAG {
+    { 
+      serjtag_initpgm(current_prog);
+    }
+  } |
+
+  K_TYPE TKN_EQUAL K_FT245R {
+    { 
+      ft245r_initpgm(current_prog);
     }
   } |
 
@@ -1371,10 +1386,10 @@ static int assign_pin(int pinno, TOKEN * v, int invert)
 
   value = v->value.number;
 
-  if ((value <= 0) || (value >= 18)) {
+  if ((value < 0) || (value >= 18)) {
     fprintf(stderr, 
             "%s: error at line %d of %s: pin must be in the "
-            "range 1-17\n",
+            "range 0-17\n",
             progname, lineno, infile);
     exit(1);
   }
