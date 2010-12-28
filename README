@@ -1,3 +1,8 @@
+Warning: This version of avrdude contains closed source 32 bits code from
+http://www.ftdichip.com/Drivers/D2XX.htm
+
+--
+
 See the documentation file for the details.
 
 The latest version of AVRDUDE is always available here:
