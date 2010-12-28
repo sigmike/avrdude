@@ -338,6 +338,9 @@ case $target in
 esac
 AC_SUBST(WINDOWS_DIRS,$WINDOWS_DIRS)
 
+CFLAGS="${CFLAGS} -DSUPPORT_FT245R"
+LIBS="${LIBS} ./libftd2xx.a.0.4.16 -lpthread -ldl -lrt"
+
 AC_CONFIG_FILES([
        doc/Makefile
        windows/Makefile
