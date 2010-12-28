@@ -15703,11 +15703,21 @@ part
 
 
 programmer
-  id    = "ftdi";
+  id    = "ftdi_breakout";
   desc  = "SparkFun FTDI Basic Breakout";
   type  = ft245r;
   miso  = 1;  # RXD
   sck   = 3;  # CTS
   mosi  = 0;  # TXD
   reset = 4;  # DTR
+;
+
+programmer
+  id    = "ftdi_cable";
+  desc  = "FTDI Cable";
+  type  = ft245r;
+  miso = 1;  # RxD
+  sck = 2;   # RTS
+  mosi = 0;  # TxD
+  reset = 3; # CTS
 ;
