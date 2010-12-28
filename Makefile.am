@@ -147,7 +147,11 @@ libavrdude_a_SOURCES = \
 	usbtiny.h \
 	usbtiny.c \
 	update.h \
-	update.c
+	update.c \
+	serjtag.c \
+	serjtag.h \
+	ft245r.c \
+	ft245r.h
 
 avrdude_SOURCES = \
 	main.c \
