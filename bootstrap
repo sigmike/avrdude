@@ -38,7 +38,7 @@ set -x
 
 rm -rf autom4te.cache
 
-${ACLOCAL}
+${ACLOCAL} -I .
 ${AUTOHEADER}
 ${AUTOCONF}
 ${AUTOMAKE} -a -c

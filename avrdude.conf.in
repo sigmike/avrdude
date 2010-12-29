@@ -427,6 +427,17 @@ programmer
 ;
 
 programmer
+  id    = "ezdop";
+  desc  = "AE6HO EZ-Doppler";
+  type  = ftbb;
+  baudrate = 230400;
+  reset = 5;
+  sck   = 3;
+  mosi  = 2;
+  miso  = 1;
+}
+
+programmer
   id    = "butterfly";
   desc  = "Atmel Butterfly Development Board";
   type  = butterfly;
