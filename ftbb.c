@@ -38,11 +38,7 @@
 /* number of microseconds between a write and a read */
 #define WRITE_DELAY 50
 
-#if HAVE_LIBFTD2XX
-#include <ftd2xx.h>
-#elif HAVE_FTDI_H
 #include <ftdi.h>
-#endif
 
 #define RESET   (1<<(pgm->pinno[PIN_AVR_RESET]-1))
 #define SCK	(1<<(pgm->pinno[PIN_AVR_SCK]-1))
@@ -50,13 +46,8 @@
 #define MISO	(1<<(pgm->pinno[PIN_AVR_MISO]-1))
 #define FTDDR	(MOSI|SCK|RESET)
 
-#if HAVE_LIBFTD2XX
-static FT_STATUS status;
-static FT_HANDLE handle;
-#elif HAVE_FTDI_H
 static struct ftdi_context device;
 static int status;
-#endif
 
 static unsigned char txbits;
 
@@ -71,13 +62,9 @@ static void bbbuffer_flush(void) {
 
   if (bbbuffer_pos == 0) return;
 
-#if HAVE_LIBFTD2XX
-      FT_Write(handle, bbbuffer, bbbuffer_pos, &written);
-#elif HAVE_FTDI_H
-      int written = ftdi_write_data(&device, bbbuffer, bbbuffer_pos);
-      if (written != bbbuffer_pos)
-        printf("ftdi_write_data failed (%d bytes written instead of %d)\n", written, bbbuffer_pos);
-#endif /* HAVE_LIBFTD2XX */
+  int written = ftdi_write_data(&device, bbbuffer, bbbuffer_pos);
+  if (written != bbbuffer_pos)
+    printf("ftdi_write_data failed (%d bytes written instead of %d)\n", written, bbbuffer_pos);
 
   bbbuffer_pos = 0;
 }
@@ -103,10 +90,6 @@ static void bbbuffer_add(unsigned char value) {
 static void spi_transmit(PROGRAMMER * pgm, unsigned char sendbuffer[4], 
                          unsigned char receivebuffer[4], unsigned char skipreceive)
 {
-#if HAVE_LIBFTD2XX
-    DWORD written;
-#endif /* HAVE_LIBFTD2XX */
-
   unsigned char pins = 0;
   int i, bitpos;
 
@@ -134,11 +117,7 @@ static void spi_transmit(PROGRAMMER * pgm, unsigned char sendbuffer[4],
         bbbuffer_flush();
         usleep(WRITE_DELAY);
 
-#if HAVE_LIBFTD2XX
-        FT_GetBitMode(handle, &pins);
-#elif HAVE_FTDI_H
         ftdi_read_pins(&device, &pins);        
-#endif /* HAVE_LIBFTD2XX */
 
         if ((pins & MISO) != 0)
           receivebuffer[i] |= (1 << bitpos);        
@@ -328,28 +307,16 @@ static int ftbb_paged_write(PROGRAMMER * pgm, AVRPART * p, AVRMEM * m,
  */
 static int ftbb_initialize(PROGRAMMER *pgm, AVRPART *p)
 {
-#if HAVE_LIBFTD2XX
-    DWORD written;
-#endif /* HAVE_LIBFTD2XX */
-
     // Atmel documentation says to raise RESET for 2 cpu clocks while sclk is low
     // then lower RESET and wait 20 ms.
     txbits |= RESET;
 
-#if HAVE_LIBFTD2XX
-    FT_Write(handle, &txbits, 1, &written);
-#elif HAVE_FTDI_H
     ftdi_write_data(&device, &txbits, 1);
-#endif /* HAVE_LIBFTD2XX */
 
     usleep(1000); // 2 AVR cpu clocks at any realistic clock rate
     txbits &= ~RESET;
 
-#if HAVE_LIBFTD2XX
-    FT_Write(handle, &txbits, 1, &written);
-#elif HAVE_FTDI_H
     ftdi_write_data(&device, &txbits, 1);
-#endif /* HAVE_LIBFTD2XX */
 
     usleep(20000);
 
@@ -380,19 +347,11 @@ static void ftbb_display(PROGRAMMER *pgm, char *p)
  */
 static void ftbb_enable(PROGRAMMER *pgm)
 {
-#if HAVE_LIBFTD2XX
-    DWORD written;
-#endif /* HAVE_LIBFTD2XX */
-
     // Lower SCK & RESET
     txbits &= ~SCK;
     txbits &= ~RESET;
 
-#if HAVE_LIBFTD2XX
-    FT_Write(handle, &txbits, 1, &written);
-#elif HAVE_FTDI_H
     ftdi_write_data(&device, &txbits, 1);
-#endif /* HAVE_LIBFTD2XX */
 }
 
 /* Programmer disable command for pgm->disable
@@ -402,17 +361,10 @@ static void ftbb_enable(PROGRAMMER *pgm)
  */
 static void ftbb_disable(PROGRAMMER *pgm)
 {
-#if HAVE_LIBFTD2XX
-    DWORD written;
-#endif /* HAVE_LIBFTD2XX */  
     // Raise RESET to return to normal mode
     txbits |= RESET;
 
-#if HAVE_LIBFTD2XX
-    FT_Write(handle, &txbits, 1, &written);
-#elif HAVE_FTDI_H
     ftdi_write_data(&device, &txbits, 1);
-#endif /* HAVE_LIBFTD2XX */
 }
 
 /* Programmer programming mode enable function for pgm->program_enable
@@ -441,29 +393,17 @@ static int ftbb_program_enable(PROGRAMMER *pgm, AVRPART *p)
                       "program enable",
                       cmd[1], res[2]);
 
-#if HAVE_LIBFTD2XX
-      DWORD written;
-#endif /* HAVE_LIBFTD2XX */
-
       // Atmel documentation says if the command did not echo back, give RESET a positive pulse
       // and issue a new Programming Enable command
 
       txbits &= ~SCK;
       txbits |= RESET;
 
-#if HAVE_LIBFTD2XX
-      FT_Write(handle, &txbits, 1, &written);
-#elif HAVE_FTDI_H
       ftdi_write_data(&device, &txbits, 1);
-#endif /* HAVE_LIBFTD2XX */
 
       txbits &= ~RESET;
 
-#if HAVE_LIBFTD2XX
-      FT_Write(handle, &txbits, 1, &written);
-#elif HAVE_FTDI_H
       ftdi_write_data(&device, &txbits, 1);
-#endif /* HAVE_LIBFTD2XX */
       
       status = pgm->cmd(pgm, cmd, res);
     }
@@ -508,46 +448,12 @@ int ftbb_parse_name(char *name, int *vid, int *pid, int *ifc)
 
 /* Programmer open command for pgm->open
  *
- * Opens FTD2XX device specified by 'name', performs a chip reset, then
- * sets the baudrate and bit bang mode
- *
  */
 static int ftbb_open(PROGRAMMER *pgm, char *name)
 {
     int vid, pid, ifc;
     ftbb_parse_name(name, &vid, &pid, &ifc);
     
-#if HAVE_LIBFTD2XX
-    int devnum = 0;
-    if (strcmp(name, "ft0")) {
-        fprintf(stderr, "ERROR: FTD2XX device selection not yet implemented!\n");
-        return -1;
-    }
-
-    // Call FTD2XX library to open device
-    if ((status = FT_Open(devnum, &handle)) != FT_OK) {
-        fprintf(stderr, "Failed to open FTD2XX device #%d.\n", devnum);
-        return -1;        
-    }
-
-    // Reset chipset
-    if ((status = FT_ResetDevice(handle)) != FT_OK) {
-        fprintf(stderr, "Failed to reset chipset for FTD2XX device #%d.\n", devnum);
-        return -1;
-    }
-
-    // Set baud rate for bit bang interface
-    if ((status = FT_SetBaudRate(handle, pgm->baudrate)) != FT_OK) {
-        fprintf(stderr, "Failed to set baud rate for FTD2XX device #%d.\n", devnum);
-        return -1;
-    }
-
-    // Set bit bang direction and mode
-    if ((status = FT_SetBitMode(handle, FTDDR, 1)) != FT_OK) {
-        fprintf(stderr, "Failed to set bit bang mode for FTD2XX device #%d.\n", devnum);
-        return -1;
-    }
-#elif HAVE_FTDI_H
     // Open device via FTDI library *** FIXME *** hardcoded VID and PID
     if (ftdi_usb_open(&device, EZDOP_VENDORID, EZDOP_PRODUCTID)) {
 	fprintf(stderr, "ftdi_usb_open: %s", device.error_str);
@@ -577,7 +483,6 @@ static int ftbb_open(PROGRAMMER *pgm, char *name)
         fprintf(stderr, "ftdi_read_data_set_chunksize: %s", device.error_str);
 	return -1;
     }
-#endif /* HAVE_LIBFTD2XX */
 
     return 0;
 }
@@ -589,11 +494,7 @@ static int ftbb_open(PROGRAMMER *pgm, char *name)
  */
 static void ftbb_close(PROGRAMMER *pgm)
 {
-#if HAVE_LIBFTD2XX
-    FT_Close(handle);
-#elif HAVE_FTDI_H
     ftdi_deinit(&device);
-#endif
 }
 #endif /* FTDI_SUPPORT */
 
@@ -606,10 +507,6 @@ static void ftbb_close(PROGRAMMER *pgm)
 void ftbb_initpgm (PROGRAMMER *pgm)
 {
 #if FTDI_SUPPORT
-
-#if HAVE_LIBFTD2XX
-    DWORD num_devices;
-#endif
 
     strcpy(pgm->type, "ftbb");
     pgm->initialize = ftbb_initialize;
@@ -628,15 +525,8 @@ void ftbb_initpgm (PROGRAMMER *pgm)
     pgm->paged_write = ftbb_paged_write;
 #endif
 
-#if HAVE_LIBFTD2XX
-    if ((status = FT_ListDevices(&num_devices, NULL, FT_LIST_NUMBER_ONLY)) != FT_OK)
-        fprintf(stderr, "Failed to initialize FTD2XX interface. (%li)\n", status);
-    else
-        printf("%lu FTD2XX device(s) found.\n", num_devices);
-#elif HAVE_FTDI_H
     if ((status = ftdi_init(&device)) < 0)
         fprintf(stderr, "Failed to initialize FTDI interface. (%i)\n", status);
-#endif     
 
     txbits = RESET;
 #endif /* FTDI_SUPPORT */
