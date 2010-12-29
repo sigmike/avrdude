@@ -29,7 +29,7 @@ AC_DEFUN([FTBB_FTDI],
 			no)  ftdi_support=no ;;
 			*)   AC_MSG_ERROR(bad value ${enableval} for ftdi-support option) ;;
 			esac],
-		[ftdi_support=no])
+		[ftdi_support=yes])
 	AM_CONDITIONAL(FTDI_SUPPORT, [test "$ftdi_support" = "yes"])
 
 	if test "$ftdi_support" = "yes"; then
