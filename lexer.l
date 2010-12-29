@@ -146,6 +146,7 @@ eeprom           { yylval=NULL; return K_EEPROM; }
 enablepageprogramming { yylval=NULL; return K_ENABLEPAGEPROGRAMMING; }
 errled           { yylval=NULL; return K_ERRLED; }
 flash            { yylval=NULL; return K_FLASH; }
+ftbb		 { yylval=NULL; return K_FTBB; }
 has_jtag         { yylval=NULL; return K_HAS_JTAG; }
 has_debugwire    { yylval=NULL; return K_HAS_DW; }
 has_pdi          { yylval=NULL; return K_HAS_PDI; }

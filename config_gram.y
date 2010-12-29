@@ -48,6 +48,7 @@
 #include "avr.h"
 #include "jtagmkI.h"
 #include "jtagmkII.h"
+#include "ftbb.h"
 
 #if defined(WIN32NATIVE)
 #define strtok_r( _s, _sep, _lasts ) \
@@ -151,6 +152,7 @@ static int parse_cmdbits(OPCODE * op);
 %token K_USBASP
 %token K_USBTINY
 %token K_BUTTERFLY
+%token K_FTBB
 %token K_TYPE
 %token K_VCC
 %token K_VFYLED
@@ -548,6 +550,12 @@ prog_parm :
   K_TYPE TKN_EQUAL K_DRAGON_PP {
     {
       stk500v2_dragon_pp_initpgm(current_prog);
+    }
+  } |
+
+  K_TYPE TKN_EQUAL K_FTBB {
+    {
+      ftbb_initpgm(current_prog);
     }
   } |
 

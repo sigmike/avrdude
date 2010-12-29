@@ -309,6 +309,18 @@
 default_parallel   = "@DEFAULT_PAR_PORT@";
 default_serial     = "@DEFAULT_SER_PORT@";
 
+programmer
+  id       = "ezdop";
+  desc     = "AE6HO EZ-Doppler";
+  type     = ftbb;
+  baudrate = 230400;
+  reset    = 5;
+  sck      = 3;
+  mosi     = 2;
+  miso     = 1;
+;
+
+
 
 #
 # PROGRAMMER DEFINITIONS
@@ -425,6 +437,17 @@ programmer
   desc  = "USBtiny simple USB programmer, http://www.ladyada.net/make/usbtinyisp/";
   type  = usbtiny;
 ;
+
+programmer
+  id    = "ezdop";
+  desc  = "AE6HO EZ-Doppler";
+  type  = ftbb;
+  baudrate = 230400;
+  reset = 5;
+  sck   = 3;
+  mosi  = 2;
+  miso  = 1;
+}
 
 programmer
   id    = "butterfly";

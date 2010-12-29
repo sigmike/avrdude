@@ -56,7 +56,7 @@ avrdude_CFLAGS   = @ENABLE_WARNINGS@
 
 libavrdude_a_CFLAGS   = @ENABLE_WARNINGS@
 
-avrdude_LDADD  = $(top_builddir)/$(noinst_LIBRARIES) @LIBUSB@ @LIBUSB_1_0@ @LIBHID@ -lm
+avrdude_LDADD  = $(top_builddir)/$(noinst_LIBRARIES) @LIBUSB@ @LIBUSB_1_0@ @LIBHID@ @LIBFTDI@ -lm
 
 bin_PROGRAMS = avrdude
 
@@ -87,6 +87,8 @@ libavrdude_a_SOURCES = \
 	avr910.c \
 	avr910.h \
 	avrdude.h \
+	avrftdi.c \
+	avrftdi.h \
 	avrpart.c \
 	avrpart.h \
 	bitbang.c \
@@ -104,6 +106,8 @@ libavrdude_a_SOURCES = \
 	fileio.c \
 	fileio.h \
 	freebsd_ppi.h \
+	ftbb.c \
+	ftbb.h \
 	jtagmkI.c \
 	jtagmkI.h \
 	jtagmkI_private.h \
