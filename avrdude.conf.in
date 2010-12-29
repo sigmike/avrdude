@@ -435,7 +435,19 @@ programmer
   sck   = 3;
   mosi  = 2;
   miso  = 1;
-}
+;
+
+programmer
+  id       = "ft232r";
+  desc     = "FT232R";
+  type     = ftbb;
+  reset    = 4;
+  sck      = 3;
+  mosi     = 1;
+  miso     = 2;
+  baudrate = 4200;
+;
+
 
 programmer
   id    = "butterfly";

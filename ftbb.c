@@ -30,7 +30,7 @@
 #include <string.h>
 
 #if FTDI_SUPPORT
-#define FTBB_DEBUG 0
+#define FTBB_DEBUG 1
 
 /* for debugging paged write can be switched off and buffer size set to 1 */
 #define FTBB_USE_PAGED_WRITE 1
@@ -165,8 +165,7 @@ static int ftbb_cmd(PROGRAMMER *pgm, unsigned char cmd[4], unsigned char res[4])
     printf("CMD: %02X%02X%02X%02X  ", cmd[0], cmd[1], cmd[2], cmd[3]);
 #endif
 
-    /* skip receiption for first 3 bytes */
-    spi_transmit(pgm, cmd, res, 3);
+    spi_transmit(pgm, cmd, res, 0);
 
 #if FTBB_DEBUG
     printf("RES: %02X%02X%02X%02X\n", res[0], res[1], res[2], res[3]);
@@ -391,6 +390,7 @@ static int ftbb_program_enable(PROGRAMMER *pgm, AVRPART *p)
 {
     unsigned char cmd[4];
     unsigned char res[4];
+    int           status;
   
     if (p->op[AVR_OP_PGM_ENABLE] == NULL) {
         fprintf(stderr, "program enable instruction not defined for part \"%s\"\n", p->desc);
@@ -399,9 +399,17 @@ static int ftbb_program_enable(PROGRAMMER *pgm, AVRPART *p)
 
     memset(cmd, 0, sizeof(cmd));
     avr_set_bits(p->op[AVR_OP_PGM_ENABLE], cmd);
-    pgm->cmd(pgm, cmd, res);
-
-    return 0;
+    status = pgm->cmd(pgm, cmd, res);
+    
+    if (status == 0 && res[2] != cmd[1]) {
+      fprintf(stderr, "%s: %s %s received bad echo: expected %02x but was %02x\n",
+                      pgm->type, p->desc,
+                      "program enable",
+                      cmd[1], res[2]);
+      status = -8;
+    }
+    
+    return status;
 }
 
 /* Progammer erase function for pgm->erase
