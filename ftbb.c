@@ -74,7 +74,6 @@ static void bbbuffer_flush(void) {
 #elif HAVE_FTDI_H
       ftdi_write_data(&device, bbbuffer, bbbuffer_pos);
 #endif /* HAVE_LIBFTD2XX */
-  usleep(100);
 
   bbbuffer_pos = 0;
 }
@@ -131,8 +130,7 @@ static void spi_transmit(PROGRAMMER * pgm, unsigned char sendbuffer[4],
         /* it seems that larger packets arn't sent out before the read command without sleep */ 
         int temp = bbbuffer_pos;
         bbbuffer_flush();
-        if (temp > 5)
-          usleep(BBBUFFER_SIZE * 10);
+        usleep(BBBUFFER_SIZE * 10);
 
 #if HAVE_LIBFTD2XX
         FT_GetBitMode(handle, &pins);
