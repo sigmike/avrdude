@@ -127,8 +127,6 @@ static void spi_transmit(PROGRAMMER * pgm, unsigned char sendbuffer[4],
       if (i < skipreceive) {
       } else {
 
-        /* it seems that larger packets arn't sent out before the read command without sleep */ 
-        int temp = bbbuffer_pos;
         bbbuffer_flush();
         usleep(BBBUFFER_SIZE * 10);
 
