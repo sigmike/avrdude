@@ -35,6 +35,8 @@
 /* for debugging paged write can be switched off and buffer size set to 1 */
 #define FTBB_USE_PAGED_WRITE 1
 #define BBBUFFER_SIZE 100
+/* number of microseconds between a write and a read */
+#define WRITE_DELAY 50
 
 #if HAVE_LIBFTD2XX
 #include <ftd2xx.h>
@@ -72,7 +74,9 @@ static void bbbuffer_flush(void) {
 #if HAVE_LIBFTD2XX
       FT_Write(handle, bbbuffer, bbbuffer_pos, &written);
 #elif HAVE_FTDI_H
-      ftdi_write_data(&device, bbbuffer, bbbuffer_pos);
+      int written = ftdi_write_data(&device, bbbuffer, bbbuffer_pos);
+      if (written != bbbuffer_pos)
+        printf("ftdi_write_data failed (%d bytes written instead of %d)\n", written, bbbuffer_pos);
 #endif /* HAVE_LIBFTD2XX */
 
   bbbuffer_pos = 0;
@@ -128,7 +132,7 @@ static void spi_transmit(PROGRAMMER * pgm, unsigned char sendbuffer[4],
       } else {
 
         bbbuffer_flush();
-        usleep(BBBUFFER_SIZE * 10);
+        usleep(WRITE_DELAY);
 
 #if HAVE_LIBFTD2XX
         FT_GetBitMode(handle, &pins);
