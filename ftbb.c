@@ -30,7 +30,7 @@
 #include <string.h>
 
 #if FTDI_SUPPORT
-#define FTBB_DEBUG 1
+#define FTBB_DEBUG 0
 
 /* for debugging paged write can be switched off and buffer size set to 1 */
 #define FTBB_USE_PAGED_WRITE 1
