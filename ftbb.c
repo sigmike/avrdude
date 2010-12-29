@@ -318,8 +318,7 @@ static int ftbb_initialize(PROGRAMMER *pgm, AVRPART *p)
 
     usleep(20000);
 
-    pgm->program_enable(pgm, p);
-    return 0;
+    return pgm->program_enable(pgm, p);
 }
 
 /* Programmer status display for pgm->display
@@ -401,12 +400,37 @@ static int ftbb_program_enable(PROGRAMMER *pgm, AVRPART *p)
     avr_set_bits(p->op[AVR_OP_PGM_ENABLE], cmd);
     status = pgm->cmd(pgm, cmd, res);
     
-    if (status == 0 && res[2] != cmd[1]) {
+    while (status == 0 && res[2] != cmd[1]) {
       fprintf(stderr, "%s: %s %s received bad echo: expected %02x but was %02x\n",
                       pgm->type, p->desc,
                       "program enable",
                       cmd[1], res[2]);
-      status = -8;
+
+#if HAVE_LIBFTD2XX
+      DWORD written;
+#endif /* HAVE_LIBFTD2XX */
+
+      // Atmel documentation says if the command did not echo back, give RESET a positive pulse
+      // and issue a new Programming Enable command
+
+      txbits &= ~SCK;
+      txbits |= RESET;
+
+#if HAVE_LIBFTD2XX
+      FT_Write(handle, &txbits, 1, &written);
+#elif HAVE_FTDI_H
+      ftdi_write_data(&device, &txbits, 1);
+#endif /* HAVE_LIBFTD2XX */
+
+      txbits &= ~RESET;
+
+#if HAVE_LIBFTD2XX
+      FT_Write(handle, &txbits, 1, &written);
+#elif HAVE_FTDI_H
+      ftdi_write_data(&device, &txbits, 1);
+#endif /* HAVE_LIBFTD2XX */
+      
+      status = pgm->cmd(pgm, cmd, res);
     }
     
     return status;
