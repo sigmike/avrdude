@@ -74,6 +74,7 @@ static void bbbuffer_flush(void) {
 #elif HAVE_FTDI_H
       ftdi_write_data(&device, bbbuffer, bbbuffer_pos);
 #endif /* HAVE_LIBFTD2XX */
+  usleep(100);
 
   bbbuffer_pos = 0;
 }
@@ -173,6 +174,40 @@ static int ftbb_cmd(PROGRAMMER *pgm, unsigned char cmd[4], unsigned char res[4])
 
     return 0;
 }
+
+/* reads are idempotent, so we retry after loss-of-synch */
+static int
+ftbb_read_byte(PROGRAMMER *pgm, AVRPART *p, AVRMEM *m,
+                 unsigned long addr, unsigned char *bytep)
+{
+       OPCODE          *op = NULL;
+       unsigned char   cmd[4];
+       unsigned char   res[4];
+       int             status;
+
+       /* REVISIT this "LOAD_EXT_ADDR" needs coding and testing */
+       if (m->op[AVR_OP_LOAD_EXT_ADDR])
+               return -1;
+
+       if (m->op[AVR_OP_READ_LO]) {
+               op = m->op[(addr & 1) ? AVR_OP_READ_HI : AVR_OP_READ_LO];
+               addr = addr / 2;
+       } else
+               op = m->op[AVR_OP_READ];
+
+       if (op == NULL)
+               return -1;
+
+       memset(cmd, 0, sizeof(cmd));
+       avr_set_bits(op, cmd);
+       avr_set_addr(op, cmd, addr);
+       *bytep = 0;
+
+       spi_transmit(pgm, cmd, res, 0);
+       avr_get_output(op, res, bytep);
+       return 0;
+}
+
 
 #if FTBB_USE_PAGED_WRITE
 /*
@@ -586,6 +621,8 @@ void ftbb_initpgm (PROGRAMMER *pgm)
     pgm->cmd = ftbb_cmd;
     pgm->open = ftbb_open;
     pgm->close = ftbb_close;  
+
+    pgm->read_byte = ftbb_read_byte;
 
 #if FTBB_USE_PAGED_WRITE
     pgm->paged_write = ftbb_paged_write;
