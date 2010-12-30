@@ -520,6 +520,7 @@ void ftbb_initpgm (PROGRAMMER *pgm)
     pgm->close = ftbb_close;  
 
     pgm->read_byte = ftbb_read_byte;
+    pgm->write_byte = ftbb_write_byte;
 
 #if FTBB_USE_PAGED_WRITE
     pgm->paged_write = ftbb_paged_write;
